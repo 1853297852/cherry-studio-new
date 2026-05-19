@@ -388,7 +388,7 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
   })
 
   // Select app data path
-  ipcMain.handle(IpcChannel.App_Select, async (_, options: Electron.OpenDialogOptions) => {
+  ipcMain.handle(IpcChannel.App_Select, async (_, options: Electron.OpenDialogOptions) => { // existing handler
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog(options)
       if (canceled || filePaths.length === 0) {
@@ -398,6 +398,38 @@ export async function registerIpc(mainWindow: BrowserWindow, app: Electron.App) 
     } catch (error: any) {
       logger.error('Failed to select app data path:', error)
       return null
+    }
+  })
+
+  // ---------- Custom OpenClaw installation path handling ----------
+  /**
+   * 打开系统文件夹选择对话框，供用户自定义 OpenClaw 安装路径。
+   * 前端通过 ipcRenderer.invoke('openFolderDialog', { properties: ['openDirectory'] })
+   * 获取 result { canceled: boolean, filePaths: string[] }
+   */
+  ipcMain.handle('openFolderDialog', async () => {
+    try {
+      const result = await dialog.showOpenDialog({ properties: ['openDirectory'] })
+      return result
+    } catch (error: any) {
+      logger.error('Failed to open folder dialog:', error)
+      return { canceled: true, filePaths: [] }
+    }
+  })
+
+  /**
+   * 保存用户自定义的安装路径到配置中（键名 customInstallPath）。
+   * 前端调用 ipcRenderer.invoke('setInstallPath', path)。
+   */
+  ipcMain.handle('setInstallPath', async (_, installPath: string) => {
+    if (!installPath) return false
+    try {
+      configManager.set('customInstallPath', installPath)
+      logger.info('Saved custom OpenClaw install path', { installPath })
+      return true
+    } catch (error: any) {
+      logger.error('Failed to save custom install path', error)
+      return false
     }
   })
 

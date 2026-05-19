@@ -68,7 +68,8 @@ const SelectAgentBaseModelButton = ({
     }
   }
 
-  const providerName = model?.provider ? getProviderNameById(model.provider) : model?.provider_name
+  // providerName 包含模型对应的服务商名称（如 NVIDIA、OpenAI），在 UI 中会以 "| ProviderName" 的形式展示
+const providerName = model?.provider ? getProviderNameById(model.provider) : model?.provider_name
 
   // Merge default styles with custom styles
   const mergedStyle: CSSProperties = {

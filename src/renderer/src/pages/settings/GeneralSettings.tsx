@@ -25,7 +25,8 @@ import type { NotificationSource } from '@renderer/types/notification'
 import { isValidProxyUrl } from '@renderer/utils'
 import { formatErrorMessage } from '@renderer/utils/error'
 import { defaultByPassRules, defaultLanguage } from '@shared/config/constant'
-import { Flex, Input, Switch, Tooltip } from 'antd'
+import { Flex, Input, Switch, Tooltip, Button } from 'antd'
+import { ipcRenderer } from 'electron'
 import type { FC } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -71,6 +72,7 @@ const GeneralSettings: FC = () => {
     setDisableHardwareAcceleration
   } = useSettings()
   const [proxyUrl, setProxyUrl] = useState<string | undefined>(storeProxyUrl)
+  const [customInstallPath, setCustomInstallPath] = useState<string>('')
   const [proxyBypassRules, setProxyBypassRules] = useState<string | undefined>(storeProxyBypassRules)
   const { theme } = useTheme()
   const { enableDeveloperMode, setEnableDeveloperMode } = useEnableDeveloperMode()
@@ -341,6 +343,29 @@ const GeneralSettings: FC = () => {
         <SettingRow>
           <SettingRowTitle>{t('settings.launch.totray')}</SettingRowTitle>
           <Switch checked={launchToTray} onChange={(checked) => updateLaunchToTray(checked)} />
+        </SettingRow>
+      </SettingGroup>
+      <SettingGroup theme={theme}>
+        <SettingTitle>自定义安装路径</SettingTitle>
+        <SettingDivider />
+        <SettingRow>
+          <SettingRowTitle>安装目录</SettingRowTitle>
+          <Input
+            placeholder="C:\\Program Files\\OpenClaw"
+            value={customInstallPath}
+            onChange={e => setCustomInstallPath(e.target.value)}
+            style={{ width: 240 }}
+          />
+          <Button style={{ marginLeft: 8 }} onClick={async () => {
+            const result = await ipcRenderer.invoke('openFolderDialog', { properties: ['openDirectory'] })
+            if (result && !result.canceled && result.filePaths?.[0]) {
+              setCustomInstallPath(result.filePaths[0])
+            }
+          }}>浏览</Button>
+          <Button style={{ marginLeft: 8 }} type="primary" onClick={async () => {
+            await ipcRenderer.invoke('setInstallPath', customInstallPath)
+            void window.toast.success('已保存自定义安装路径')
+          }}>保存</Button>
         </SettingRow>
       </SettingGroup>
       <SettingGroup theme={theme}>
